@@ -10,4 +10,4 @@ patchModules.register("logger", new LoggerService());
 patchModules.get("auth").login("alice");
 patchModules.get("logger").log("Starting app...");
 
-startRepl()
+startRepl();
