@@ -3,6 +3,7 @@ import repl from "repl";
 import path from "path";
 import { pathToFileURL } from "url";
 import { patchModules } from "./core/patchModules.js";
+import { config, saveConfig } from "./utils/config.js";
 
 export function startRepl() {
     const replServer = repl.start({
@@ -105,6 +106,31 @@ export function startRepl() {
                 console.error(`❌ ${err.message}`);
             }
 
+            this.displayPrompt();
+        },
+    });
+
+    // === CONFIG COMMANDS ===
+    replServer.defineCommand("viewconfig", {
+        help: "[Config] View the current configuration",
+        action() {
+            console.log(config);
+            this.displayPrompt();
+        },
+    });
+
+    replServer.defineCommand("setconfig", {
+        help: "[Config] Set a configuration property: .setconfig <key> <value>",
+        action(input) {
+            const [key, ...valueParts] = input.split(" ");
+            const value = valueParts.join(" ");
+            if (!key || !value) {
+                console.log("Usage: .setconfig <key> <value>");
+                return this.displayPrompt();
+            }
+            const newConfig = { ...config, [key]: value };
+            saveConfig(newConfig);
+            console.log(`✅ Updated '${key}' to '${value}'`);
             this.displayPrompt();
         },
     });
