@@ -3,7 +3,7 @@ import repl from "repl";
 import path from "path";
 import { pathToFileURL } from "url";
 import { patchModules } from "./core/patchModules.js";
-import { config, saveConfig } from "./utils/config.js";
+import { config, configSchema, saveConfig } from "./utils/config.js";
 
 export function startRepl() {
     const replServer = repl.start({
@@ -123,10 +123,26 @@ export function startRepl() {
         help: "[Config] Set a configuration property: .setconfig <key> <value>",
         action(input) {
             const [key, ...valueParts] = input.split(" ");
-            const value = valueParts.join(" ");
+            let value: any = valueParts.join(" ");
+            if (!configSchema[key]) throw new Error(`${key} does not exist.`);
+            const type = configSchema[key];
             if (!key || !value) {
                 console.log("Usage: .setconfig <key> <value>");
                 return this.displayPrompt();
+            }
+            switch (type) {
+                case "number":
+                    value = Number(value);
+                    if (isNaN(value))
+                        throw new Error(`${value} must be a number`);
+                    break;
+                case "boolean":
+                    if (value === "true" || value) value = true;
+                    else if (value === "false" || !value) value = false;
+                    else throw new Error(`${value} must be a boolean`);
+                    break;
+                case "string":
+                    break;
             }
             const newConfig = { ...config, [key]: value };
             saveConfig(newConfig);
