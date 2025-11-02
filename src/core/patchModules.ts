@@ -6,6 +6,10 @@ type ModuleEntry = {
     backup?: any; // previous instance for rollback
 };
 
+/**
+ * Patch Modules
+ * @class
+ */
 export class PatchModules {
     private modules: Record<string, ModuleEntry> = {};
 
@@ -34,6 +38,7 @@ export class PatchModules {
 
     /**
      * Get a registered module instance
+     * @param name {string} Module Name
      */
     get<T = any>(name: string): T {
         const entry = this.modules[name];
@@ -43,6 +48,7 @@ export class PatchModules {
 
     /**
      * Reload a module from its file path (if registered with a path)
+     * @param name {string} Module to reload
      */
     reload(name: string): any {
         const entry = this.modules[name];
@@ -58,8 +64,9 @@ export class PatchModules {
     }
 
     /**
-     * Reload a module with a new in-memory instance
-     * Useful for testing or manual hot-update without a file
+     * Reload a module with a new in-memory instance, useful for testing or manual hot-update without a file
+     * @param name {string} Module to reload
+     * @param newInstance {any} What to reload the module as
      */
     reloadInstance(name: string, newInstance: any): any {
         const entry = this.modules[name];
@@ -73,6 +80,7 @@ export class PatchModules {
 
     /**
      * Rollback a module to previous version
+     * @param name {atring} Module to rollback
      */
     rollback(name: string): any {
         const entry = this.modules[name];

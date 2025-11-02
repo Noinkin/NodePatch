@@ -1,8 +1,13 @@
+/**
+ * Patch Packages
+ * @class
+ */
 export class PatchPackages {
     private packages: Record<string, any> = {};
 
     /**
-     * Get a registered module instance
+     * Import a package
+     * @param name {string} Package name
      */
     get<T = any>(name: string): T {
         if (!this.packages[name]) {
@@ -12,7 +17,8 @@ export class PatchPackages {
     }
 
     /**
-     * Reload a module from its file path (if registered with a path)
+     * Reload a package by its name
+     * @param name {string} Package name
      */
     reload<T = any>(name: string): any {
         const resolvedPath = require.resolve(name);
@@ -21,10 +27,17 @@ export class PatchPackages {
         return this.get(name) as T;
     }
 
+    /**
+     * Reloads all packages
+     */
     reloadAll() {
         Object.keys(this.packages).forEach((name) => this.reload(name));
     }
 
+    /**
+     * Clears import cache of a module
+     * @param modulePath {string} Filepath of module
+     */
     clearCache(modulePath: string) {
         const mod = require.cache[modulePath];
         if (mod) {
