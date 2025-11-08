@@ -15,8 +15,8 @@ export class PatchModules {
 
     /**
      * Register a module instance in code
-     * @param name Unique module name
-     * @param instance Module instance (object or class instance)
+     * @param name {string} Unique module name
+     * @param instance {any} Module instance (object or class instance)
      */
     register(name: string, instance: any): any {
         this.modules[name] = { instance };
@@ -26,8 +26,8 @@ export class PatchModules {
 
     /**
      * Register a module from a file path (optional)
-     * @param name Unique module name
-     * @param modulePath Path to JS/TS module
+     * @param name {string} Unique module name
+     * @param modulePath {string} Path to JS/TS module
      */
     registerFromFile(name: string, modulePath: string): any {
         const instance = require(modulePath);
@@ -80,7 +80,7 @@ export class PatchModules {
 
     /**
      * Rollback a module to previous version
-     * @param name {atring} Module to rollback
+     * @param name {string} Module to rollback
      */
     rollback(name: string): any {
         const entry = this.modules[name];
