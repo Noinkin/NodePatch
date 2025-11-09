@@ -7,14 +7,16 @@ Patch Packages
 Import a package
 
 **Parameters:**
-- `name` *(string)* — Package name
+
+- `name` _(string)_ — Package name
 
 ## reload()
 
 Reload a package by its name
 
 **Parameters:**
-- `name` *(string)* — Package name
+
+- `name` _(string)_ — Package name
 
 ## reloadAll()
 
@@ -25,5 +27,5 @@ Reloads all packages
 Clears import cache of a module
 
 **Parameters:**
-- `modulePath` *(string)* — Filepath of module
 
+- `modulePath` _(string)_ — Filepath of module

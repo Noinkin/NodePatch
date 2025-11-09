@@ -10,6 +10,9 @@ import { patchPackages } from "./core/patchPackages.js";
 
 const execPromise = util.promisify(exec);
 
+/**
+ * Start the interactive NodePatch REPL.
+ */
 export function startRepl() {
     const replServer = repl.start({
         prompt: "NodePatch> ",
@@ -17,8 +20,9 @@ export function startRepl() {
         ignoreUndefined: true,
     });
 
-    // Expose patchModules and helpers
+    // === BASIC HELPERS ===
     replServer.context.patchModules = patchModules;
+
     replServer.context.reload = (name: string) => {
         const entry: any = patchModules.get(name);
         if (!entry.constructor)
@@ -26,10 +30,12 @@ export function startRepl() {
         patchModules.reloadInstance(name, new entry.constructor());
         console.log(`✅ Reloaded module: ${name}`);
     };
-    replServer.context.rollback = (name: string) => {
-        patchModules.rollback(name);
-        console.log(`✅ Rolled back module: ${name}`);
+
+    replServer.context.rollback = (name: string, steps?: number) => {
+        patchModules.rollback(name, steps || 1);
+        console.log(`🔁 Rolled back module '${name}'`);
     };
+
     replServer.context.reloadFromFile = (name: string, filePath: string) => {
         const resolvedPath = path.resolve(filePath);
         delete require.cache[require.resolve(resolvedPath)];
@@ -37,15 +43,31 @@ export function startRepl() {
         patchModules.reloadInstance(name, newModule);
         console.log(`✅ Reloaded module '${name}' from file '${filePath}'`);
     };
-    replServer.context.load = (filePath: string, moduleName: string) => {
-        const resolvedPath = path.resolve(filePath);
-        delete require.cache[require.resolve(resolvedPath)];
-        const moduleInstance = require(resolvedPath);
-        patchModules.register(moduleName, moduleInstance);
-        console.log(`✅ Loaded module '${moduleName}' from file '${filePath}'`);
-    };
 
-    // Add custom commands
+    replServer.defineCommand("register", {
+        help: "[NodePatch/PatchModules] Register a module from a file (.register <filePath> <moduleName>)",
+        action(input) {
+            const [filePath, moduleName] = input.trim().split(/\s+/);
+            if (!filePath || !moduleName) {
+                console.log("Usage: .register <filePath> <moduleName>");
+                return this.displayPrompt();
+            }
+            try {
+                const resolvedPath = path.resolve(process.cwd(), filePath);
+                delete require.cache[require.resolve(resolvedPath)];
+                const moduleInstance = require(resolvedPath);
+                patchModules.registerFromFile(moduleName, resolvedPath);
+                console.log(
+                    `✅ Registered module '${moduleName}' from file '${filePath}'`,
+                );
+            } catch (err: any) {
+                console.error(`❌ ${err.message}`);
+            }
+            this.displayPrompt();
+        },
+    });
+
+    // === PATCH MODULES COMMANDS ===
     replServer.defineCommand("modules", {
         help: "[NodePatch/PatchModules] List all registered modules",
         action() {
@@ -56,7 +78,7 @@ export function startRepl() {
     });
 
     replServer.defineCommand("reload", {
-        help: "[NodePatch/PatchModules] Reload a registered module",
+        help: "[NodePatch/PatchModules] Reload a registered module (.reload <moduleName>)",
         action(name) {
             if (!name) {
                 console.log("Usage: .reload <moduleName>");
@@ -73,18 +95,57 @@ export function startRepl() {
     });
 
     replServer.defineCommand("rollback", {
-        help: "[NodePatch/PatchModules] Rollback a module to its previous version",
-        action(name) {
+        help: "[NodePatch/PatchModules] Roll back a module (.rollback <moduleName> [steps])",
+        action(input) {
+            const [name, stepsRaw] = input.trim().split(/\s+/);
             if (!name) {
-                console.log("Usage: .rollback <moduleName>");
+                console.log("Usage: .rollback <moduleName> [steps]");
                 return this.displayPrompt();
             }
+            const steps = stepsRaw ? Number(stepsRaw) : 1;
+            if (Number.isNaN(steps) || steps < 1) {
+                console.log("Steps must be a positive integer.");
+                return this.displayPrompt();
+            }
+
             try {
-                patchModules.rollback(name.trim());
-                console.log(`🔁 Rolled back module '${name.trim()}'`);
+                patchModules.rollback(name.trim(), steps);
+                console.log(
+                    `🔁 Rolled back module '${name.trim()}' by ${steps} version(s)`,
+                );
             } catch (err: any) {
                 console.error(`❌ ${err.message}`);
             }
+            this.displayPrompt();
+        },
+    });
+
+    replServer.defineCommand("history", {
+        help: "[NodePatch/PatchModules] Show stored version history for a module (.history <moduleName>)",
+        action(name) {
+            if (!name) {
+                console.log("Usage: .history <moduleName>");
+                return this.displayPrompt();
+            }
+
+            try {
+                const history = patchModules.history(name.trim());
+                if (!history.length) {
+                    console.log("(no stored versions)");
+                } else {
+                    console.log(`Version history for '${name.trim()}':`);
+                    history.forEach((v, i) => {
+                        console.log(
+                            `${i}: ${v.key} (${new Date(
+                                v.createdAt,
+                            ).toLocaleString()})`,
+                        );
+                    });
+                }
+            } catch (err: any) {
+                console.error(`❌ ${err.message}`);
+            }
+
             this.displayPrompt();
         },
     });
@@ -94,7 +155,7 @@ export function startRepl() {
         async action(input) {
             const [filePath, moduleName] = input.trim().split(/\s+/);
             if (!filePath || !moduleName) {
-                console.log("Usage: .patch <filePath> <moduleName>");
+                console.log("Usage: .reloadFromFile <filePath> <moduleName>");
                 return this.displayPrompt();
             }
 
@@ -117,15 +178,12 @@ export function startRepl() {
 
     // === PATCH PACKAGES COMMANDS ===
     replServer.defineCommand("npminstall", {
-        help: "[NodePatch/PatchPackages] Installs an npm package at runtime: .npminstall <pkg> <version>",
+        help: "[NodePatch/PatchPackages] Install an npm package at runtime: .npminstall <pkg> [version]",
         async action(input) {
             const split = input.split(" ");
             const pkg = split[0];
-            let installString: string;
-            if (split[1]) {
-                const version = split[1];
-                installString = `${pkg}@${version}`;
-            } else installString = pkg;
+            let installString = pkg;
+            if (split[1]) installString += `@${split[1]}`;
 
             console.log(`Installing ${installString}...`);
             const { stdout, stderr } = await execPromise(
@@ -139,15 +197,12 @@ export function startRepl() {
     });
 
     replServer.defineCommand("npmupdate", {
-        help: "[NodePatch/PatchPackages] Updates an npm package at runtime: .npmupdate <pkg> <version>",
+        help: "[NodePatch/PatchPackages] Update an npm package: .npmupdate <pkg> [version]",
         async action(input) {
             const split = input.split(" ");
             const pkg = split[0];
-            let installString: string;
-            if (split[1]) {
-                const version = split[1];
-                installString = `${pkg}@${version}`;
-            } else installString = pkg;
+            let installString = pkg;
+            if (split[1]) installString += `@${split[1]}`;
 
             console.log(`Updating ${installString}...`);
             const { stdout, stderr } = await execPromise(
@@ -170,16 +225,20 @@ export function startRepl() {
     });
 
     replServer.defineCommand("setconfig", {
-        help: "[NodePatch/Config] Set a configuration property: .setconfig <key> <value>",
+        help: "[NodePatch/Config] Set a configuration property (.setconfig <key> <value>)",
         action(input) {
             const [key, ...valueParts] = input.split(" ");
             let value: any = valueParts.join(" ");
-            if (!configSchema[key]) throw new Error(`${key} does not exist.`);
-            const type = configSchema[key];
             if (!key || !value) {
                 console.log("Usage: .setconfig <key> <value>");
                 return this.displayPrompt();
             }
+            if (!configSchema[key]) {
+                console.error(`❌ ${key} is not a valid configuration key`);
+                return this.displayPrompt();
+            }
+
+            const type = configSchema[key];
             switch (type) {
                 case "number":
                     value = Number(value);
@@ -187,13 +246,14 @@ export function startRepl() {
                         throw new Error(`${value} must be a number`);
                     break;
                 case "boolean":
-                    if (value === "true" || value) value = true;
-                    else if (value === "false" || !value) value = false;
+                    if (value === "true" || value === "1") value = true;
+                    else if (value === "false" || value === "0") value = false;
                     else throw new Error(`${value} must be a boolean`);
                     break;
                 case "string":
                     break;
             }
+
             const newConfig = { ...config, [key]: value };
             saveConfig(newConfig);
             console.log(`✅ Updated '${key}' to '${value}'`);
@@ -201,18 +261,15 @@ export function startRepl() {
         },
     });
 
-    // Remove excess default REPL commands
+    // === CLEAN UP DEFAULT REPL COMMANDS ===
     delete (replServer.commands as any).save;
     delete (replServer.commands as any).load;
 
-    // Update other default REPL commands description
-    (replServer.commands as any).break.help =
-        "[Node] Terminate current command input";
-    (replServer.commands as any).clear.help =
-        "[Node] Break and clear the local context";
+    (replServer.commands as any).break.help = "[Node] Terminate current input";
+    (replServer.commands as any).clear.help = "[Node] Clear the REPL context";
     (replServer.commands as any).editor.help = "[Node] Enter editor mode";
     (replServer.commands as any).exit.help = "[Node] Exit the REPL";
-    (replServer.commands as any).help.help = "[Node] Show help";
+    (replServer.commands as any).help.help = "[Node] Show all REPL commands";
 
-    console.log("NodePatch REPL started! Type .help for commands.");
+    console.log("🚀 NodePatch REPL started! Type .help for commands.");
 }
