@@ -7,12 +7,6 @@ import { pathToFileURL } from "url";
 import { patchModules } from "./core/patchModules.js";
 import { config, configSchema, saveConfig } from "./utils/config.js";
 import { patchPackages } from "./core/patchPackages.js";
-import { CodeVault } from "./utils/caching.js";
-
-const codeVault = new CodeVault({
-  backend: "sqlite", // or "file"
-  baseDir: path.resolve(process.cwd(), ".vault")
-});
 
 const execPromise = util.promisify(exec);
 
