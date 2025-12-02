@@ -1,6 +1,7 @@
 package-lock.json
-nodepatch/paackage-lock.json
+nodepatch/package-lock.json
 node_modules/
 nodepatch/node_modules/
 nodepatch/build/
+nodepatch/.docusaurus/
 dist/
