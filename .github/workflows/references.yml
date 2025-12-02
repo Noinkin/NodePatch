@@ -5,7 +5,7 @@ on:
         branches:
             - main
         paths:
-            - 'docs/**'
+            - "docs/**"
 
 jobs:
     copy-file:
@@ -22,4 +22,4 @@ jobs:
                   dst_path: /website/docs/reference/
                   dst_branch: docs
                   dst_owner: Noinkin
-                  dst_repo_name: NodePatch 
+                  dst_repo_name: NodePatch
