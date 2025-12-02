@@ -1,58 +1,50 @@
 # PatchModules
 
-Patch Modules
+PatchModules — dynamic module registry and hot-swap manager.
+
+- Tracks all registered modules.
+- Supports in-memory reloads and file reloads.
+- Integrates with CodeVault to store compressed historical versions.
+- Allows rollback to any previously stored version.
+
+## makeVersionKey()
+
+Generate a version key with module name and timestamp.
 
 ## register()
 
-Register a module instance in code
-
-**Parameters:**
-
-- `name` _(any)_ — Unique module name
-- `instance` _(any)_ — Module instance (object or class instance)
+Register a module instance created in memory (no file tracking).
 
 ## registerFromFile()
 
-Register a module from a file path (optional)
-
-**Parameters:**
-
-- `name` _(string)_ — Unique module name
-- `modulePath` _(string)_ — Path to JS/TS module
+Register a module from a file path (enables multi-version rollback).
 
 ## get()
 
-Get a registered module instance
-
-**Parameters:**
-
-- `name` _(string)_ — Module Name
+Retrieve a registered module instance by name.
 
 ## reload()
 
-Reload a module from its file path (if registered with a path)
-
-**Parameters:**
-
-- `name` _(string)_ — Module to reload
+Reload a file-backed module and store a new compressed version in CodeVault.
 
 ## reloadInstance()
 
-Reload a module with a new in-memory instance, useful for testing or manual hot-update without a file
-
-**Parameters:**
-
-- `name` _(string)_ — Module to reload
-- `newInstance` _(any)_ — What to reload the module as
+Reload a module with a new in-memory instance.
+Optionally stores the provided source code into CodeVault for rollback.
 
 ## rollback()
 
-Rollback a module to previous version
+Rollback a module to a previous version.
 
 **Parameters:**
-
-- `name` _(string)_ — Module to rollback
+- `name` *(any)* — Module name.
+- `steps` *(any)* — Number of versions to go back (default = 1).
 
 ## list()
 
-List all registered modules
+List all registered module names.
+
+## history()
+
+Get stored version history for a given module.
+

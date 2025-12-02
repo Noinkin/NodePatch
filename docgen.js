@@ -66,7 +66,7 @@ async function generateDocs() {
 
             const outFile = path.join(OUT_DIR_CLASS, `${cls.name}.md`);
             await fs.writeFile(outFile, markdown);
-            console.log(`📘 Wrote class docs: ${outFile}`);
+            console.log(`Wrote class docs: ${outFile}`);
         }
 
         // --- Top-level functions ---
@@ -90,7 +90,7 @@ async function generateDocs() {
 
             const outFile = path.join(OUT_DIR_FUNCTIONS, `${fn.name}.md`);
             await fs.writeFile(outFile, markdown);
-            console.log(`⚙️ Wrote function docs: ${outFile}`);
+            console.log(`Wrote function docs: ${outFile}`);
         }
     }
 }

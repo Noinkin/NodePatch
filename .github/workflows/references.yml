@@ -1,0 +1,25 @@
+name: Docs References
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - 'docs/**'
+
+jobs:
+    copy-file:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Pushes docs folder
+              uses: andstor/copycat-action@v3
+              with:
+                  personal_token: ${{ secrets.PERSONAL_TOKEN }}
+                  src_path: /docs/
+                  src_branch: main
+                  dst_path: /website/docs/reference/
+                  dst_branch: docs
+                  dst_owner: Noinkin
+                  dst_repo_name: NodePatch
