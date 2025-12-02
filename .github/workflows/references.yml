@@ -19,7 +19,7 @@ jobs:
                   personal_token: ${{ secrets.PERSONAL_TOKEN }}
                   src_path: /docs/
                   src_branch: main
-                  dst_path: /website/docs/reference/
+                  dst_path: /nodepatch/docs/reference/
                   dst_branch: docs
                   dst_owner: Noinkin
                   dst_repo_name: NodePatch
