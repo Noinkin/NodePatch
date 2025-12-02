@@ -10,6 +10,7 @@ import { patchPackages } from "./core/patchPackages.js";
 
 const execPromise = util.promisify(exec);
 
+
 /**
  * Start the interactive NodePatch REPL.
  */
@@ -271,5 +272,5 @@ export function startRepl() {
     (replServer.commands as any).exit.help = "[Node] Exit the REPL";
     (replServer.commands as any).help.help = "[Node] Show all REPL commands";
 
-    console.log("🚀 NodePatch REPL started! Type .help for commands.");
+    console.log("NodePatch REPL started! Type .help for commands.");
 }
