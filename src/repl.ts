@@ -12,7 +12,7 @@ const execPromise = util.promisify(exec);
 
 /**
  * Start the interactive NodePatch REPL.
- * Use to update modules at run-time.
+ * Use to update modules at run-time
  */
 export function startRepl() {
     const replServer = repl.start({
