@@ -1,5 +1,5 @@
 # startRepl
 
 Start the interactive NodePatch REPL.
-Updates modules at run-time.
+Updates modules at run-time with user input.
 
