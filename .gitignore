@@ -1,0 +1,5 @@
+package-lock.json
+nodepatch/paackage-lock.json
+node_modules/
+nodepatch/node_modules/
+nodepatch/build/
