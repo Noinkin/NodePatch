@@ -74,62 +74,6 @@ export function startRepl() {
         },
     });
 
-    replServer.defineCommand("rollback", {
-        help: "[NodePatch/PatchModules] Roll back a module (.rollback <moduleName> [steps])",
-        action(input) {
-            const [name, stepsRaw] = input.trim().split(/\s+/);
-            if (!name) {
-                console.log("Usage: .rollback <moduleName> [steps]");
-                return this.displayPrompt();
-            }
-            const steps = stepsRaw ? Number(stepsRaw) : 1;
-            if (Number.isNaN(steps) || steps < 1) {
-                console.log("Steps must be a positive integer.");
-                return this.displayPrompt();
-            }
-
-            try {
-                patchModules.rollback(name.trim(), steps);
-                console.log(
-                    `🔁 Rolled back module '${name.trim()}' by ${steps} version(s)`,
-                );
-            } catch (err: any) {
-                console.error(`❌ ${err.message}`);
-            }
-            this.displayPrompt();
-        },
-    });
-
-    replServer.defineCommand("history", {
-        help: "[NodePatch/PatchModules] Show stored version history for a module (.history <moduleName>)",
-        action(name) {
-            if (!name) {
-                console.log("Usage: .history <moduleName>");
-                return this.displayPrompt();
-            }
-
-            try {
-                const history = patchModules.history(name.trim());
-                if (!history.length) {
-                    console.log("(no stored versions)");
-                } else {
-                    console.log(`Version history for '${name.trim()}':`);
-                    history.forEach((v, i) => {
-                        console.log(
-                            `${i}: ${v.key} (${new Date(
-                                v.createdAt,
-                            ).toLocaleString()})`,
-                        );
-                    });
-                }
-            } catch (err: any) {
-                console.error(`❌ ${err.message}`);
-            }
-
-            this.displayPrompt();
-        },
-    });
-
     replServer.defineCommand("reloadFromFile", {
         help: "[NodePatch/PatchModules] Hot-patch a module from a file (.reloadFromFile <filePath> <moduleName>)",
         async action(input) {
