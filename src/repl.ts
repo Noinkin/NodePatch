@@ -24,27 +24,6 @@ export function startRepl() {
     // === BASIC HELPERS ===
     replServer.context.patchModules = patchModules;
 
-    replServer.context.reload = (name: string) => {
-        const entry: any = patchModules.get(name);
-        if (!entry.constructor)
-            throw new Error(`Cannot reload ${name}: no constructor`);
-        patchModules.reloadInstance(name, new entry.constructor());
-        console.log(`✅ Reloaded module: ${name}`);
-    };
-
-    replServer.context.rollback = (name: string, steps?: number) => {
-        patchModules.rollback(name, steps || 1);
-        console.log(`🔁 Rolled back module '${name}'`);
-    };
-
-    replServer.context.reloadFromFile = (name: string, filePath: string) => {
-        const resolvedPath = path.resolve(filePath);
-        delete require.cache[require.resolve(resolvedPath)];
-        const newModule = require(resolvedPath);
-        patchModules.reloadInstance(name, newModule);
-        console.log(`✅ Reloaded module '${name}' from file '${filePath}'`);
-    };
-
     replServer.defineCommand("register", {
         help: "[NodePatch/PatchModules] Register a module from a file (.register <filePath> <moduleName>)",
         action(input) {
