@@ -26,23 +26,67 @@ export function startRepl() {
 
     replServer.defineCommand("register", {
         help: "[NodePatch/PatchModules] Register a module from a file (.register <filePath> <moduleName>)",
-        action(input) {
+        async action(input) {
             const [filePath, moduleName] = input.trim().split(/\s+/);
             if (!filePath || !moduleName) {
                 console.log("Usage: .register <filePath> <moduleName>");
                 return this.displayPrompt();
             }
+
             try {
                 const resolvedPath = path.resolve(process.cwd(), filePath);
-                delete require.cache[require.resolve(resolvedPath)];
-                const moduleInstance = require(resolvedPath);
-                patchModules.registerFromFile(moduleName, resolvedPath);
+                await patchModules.registerFromFile(moduleName, resolvedPath);
                 console.log(
-                    `✅ Registered module '${moduleName}' from file '${filePath}'`,
+                    `✅ Registered module '${moduleName}' from '${filePath}'`,
                 );
             } catch (err: any) {
                 console.error(`❌ ${err.message}`);
             }
+
+            this.displayPrompt();
+        },
+    });
+
+    replServer.defineCommand("forward", {
+        help: "[NodePatch/PatchModules] Roll forward a module (.forward <moduleName>)",
+        action(name) {
+            if (!name) {
+                console.log("Usage: .forward <moduleName>");
+                return this.displayPrompt();
+            }
+
+            try {
+                patchModules.rollForward(name.trim());
+                console.log(`⏩ Rolled forward module '${name.trim()}'`);
+            } catch (err: any) {
+                console.error(`❌ ${err.message}`);
+            }
+
+            this.displayPrompt();
+        },
+    });
+
+    replServer.defineCommand("history", {
+        help: "[NodePatch/PatchModules] Show rollback/forward history for a module (.history <moduleName>)",
+        action(name) {
+            if (!name) {
+                console.log("Usage: .history <moduleName>");
+                return this.displayPrompt();
+            }
+
+            try {
+                const moduleName = name.trim();
+                const info = patchModules.getHistory(moduleName);
+
+                console.log(
+                    `📜 Module '${moduleName}': ` +
+                        `rollback=${info.past}, ` +
+                        `forward=${info.future}`,
+                );
+            } catch (err: any) {
+                console.error(`❌ ${err.message}`);
+            }
+
             this.displayPrompt();
         },
     });
@@ -59,13 +103,13 @@ export function startRepl() {
 
     replServer.defineCommand("reload", {
         help: "[NodePatch/PatchModules] Reload a registered module (.reload <moduleName>)",
-        action(name) {
+        async action(name) {
             if (!name) {
                 console.log("Usage: .reload <moduleName>");
                 return this.displayPrompt();
             }
             try {
-                patchModules.reload(name.trim());
+                await patchModules.reload(name.trim());
                 console.log(`✅ Reloaded module '${name.trim()}'`);
             } catch (err: any) {
                 console.error(`❌ ${err.message}`);
@@ -84,14 +128,27 @@ export function startRepl() {
             }
 
             try {
-                const fullPath = path.resolve(process.cwd(), filePath);
-                const { default: NewModule } = await import(
-                    pathToFileURL(fullPath).href
-                );
-                patchModules.reloadInstance(moduleName, new NewModule());
-                console.log(
-                    `⚡ Hot-patched '${moduleName}' from '${filePath}'`,
-                );
+                const resolvedPath = path.resolve(process.cwd(), filePath);
+                await patchModules.reloadFromFile(moduleName, resolvedPath);
+            } catch (err: any) {
+                console.error(`❌ ${err.message}`);
+            }
+
+            this.displayPrompt();
+        },
+    });
+
+    replServer.defineCommand("rollback", {
+        help: "[NodePatch/PatchModules] Roll back a module to the previous version (.rollback <moduleName>)",
+        action(name) {
+            if (!name) {
+                console.log("Usage: .rollback <moduleName>");
+                return this.displayPrompt();
+            }
+
+            try {
+                patchModules.rollback(name.trim());
+                console.log(`⏪ Rolled back module '${name.trim()}'`);
             } catch (err: any) {
                 console.error(`❌ ${err.message}`);
             }
