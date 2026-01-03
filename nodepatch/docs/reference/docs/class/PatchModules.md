@@ -37,8 +37,9 @@ Optionally stores the provided source code into CodeVault for rollback.
 Rollback a module to a previous version.
 
 **Parameters:**
-- `name` *(any)* — Module name.
-- `steps` *(any)* — Number of versions to go back (default = 1).
+
+- `name` _(any)_ — Module name.
+- `steps` _(any)_ — Number of versions to go back (default = 1).
 
 ## list()
 
@@ -47,4 +48,3 @@ List all registered module names.
 ## history()
 
 Get stored version history for a given module.
-

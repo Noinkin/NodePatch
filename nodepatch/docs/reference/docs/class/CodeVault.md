@@ -9,7 +9,9 @@ but preserves all original formatting.
 Designed for dynamic module reloading, hot-swapping, and rollback systems.
 
 ---
+
 ### Example
+
 ```ts
 const vault = new CodeVault({ backend: "sqlite" });
 vault.store("core@1.0.0", "export default () => {\n  return 'Hello';\n}");
@@ -22,8 +24,9 @@ vault.close();
 Compresses and stores code.
 
 **Parameters:**
-- `key` *(any)* — A unique version key (e.g., `"core@1.2.3"`).
-- `code` *(any)* — The code string or Buffer to store.
+
+- `key` _(any)_ — A unique version key (e.g., `"core@1.2.3"`).
+- `code` _(any)_ — The code string or Buffer to store.
 
 - Preserves formatting (no newline removal).
 - Uses Brotli compression for efficient storage.
@@ -37,20 +40,21 @@ If the key already exists, it is **overwritten**.
 Loads, decompresses, and returns the stored code as a UTF-8 string.
 
 **Parameters:**
-- `key` *(any)* — The key identifying the stored code version.
 
-**Returns:** 
+- `key` _(any)_ — The key identifying the stored code version.
+
+**Returns:**
 
 ## remove()
 
 Deletes a stored code version from persistent storage.
 
 **Parameters:**
-- `key` *(any)* — The key of the module to delete.
+
+- `key` _(any)_ — The key of the module to delete.
 
 ## close()
 
 Closes the SQLite database connection.
 
 Has no effect in file mode.
-
