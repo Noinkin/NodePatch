@@ -8,7 +8,8 @@
         "start": "node dist/cli/index.js",
         "dev": "ts-node src/cli/index.ts",
         "test": "node dist/test/test.js",
-        "docs:build": "npx prettier . --write && tsc && node --stack-size=65500 docgen.js"
+        "docs:build": "npx prettier . --write && tsc && node --stack-size=65500 docgen.js",
+        "format": "npx prettier . --write"
     },
     "keywords": [],
     "author": "",

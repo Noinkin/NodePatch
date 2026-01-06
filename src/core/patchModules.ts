@@ -157,7 +157,20 @@ export class PatchModules {
         return Object.keys(this.modules);
     }
 
-    private async load(modulePath: string) {
+    private hasConstructor(instance: any) {
+        return (
+            typeof instance === "function" &&
+            instance.prototype !== undefined &&
+            /^class\s/.test(Function.prototype.toString.call(instance)) &&
+            instance.prototype.constructor === instance
+        );
+    }
+
+    private async load(
+        modulePath: string,
+        construct?: boolean,
+        params?: any[],
+    ) {
         if (!path.isAbsolute(modulePath)) {
             modulePath = path.resolve(process.cwd(), modulePath);
         }
@@ -166,9 +179,14 @@ export class PatchModules {
 
         const mod = await import(`${fileUrl}?v=${Date.now()}`);
 
-        const impl = mod.default ?? mod;
+        let impl = mod.default ?? mod;
         if (!impl) {
             throw Logger.error(`Failed to load module: ${modulePath}`);
+        }
+        if (this.hasConstructor(impl) && construct) {
+            impl = params ? new impl(...params) : new impl();
+        } else if (typeof impl === "function" && construct) {
+            impl = params ? impl(...params) : impl();
         }
 
         return impl;
