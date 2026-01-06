@@ -1,25 +1,39 @@
 #!/usr/bin/env node
-import repl from "repl";
-import path from "path";
-import util from "util";
-import { exec } from "child_process";
-import { pathToFileURL } from "url";
+import repl from "node:repl";
+import path from "node:path";
+import util from "node:util";
+import { exec } from "node:child_process";
 import { patchModules } from "./core/patchModules.js";
 import { config, configSchema, saveConfig } from "./utils/config.js";
 import { patchPackages } from "./core/patchPackages.js";
 
 const execPromise = util.promisify(exec);
 
+interface Definition {
+    identifier: string;
+    value: any;
+}
+
 /**
  * Start the interactive NodePatch REPL.
  * Updates modules at run-time with user input.
  */
-export function startRepl() {
+export function startRepl(definitions: Definition[]) {
     const replServer = repl.start({
         prompt: "NodePatch> ",
         useGlobal: true,
         ignoreUndefined: true,
     });
+
+    for (const definition of definitions) {
+        if (definition.identifier && definition.value) {
+            if (definition.identifier === "patchModules")
+                throw new Error(
+                    `Restricted Identifier ${definition.identifier}.`,
+                );
+            replServer.context[definition.identifier] = definition.value;
+        }
+    }
 
     // === BASIC HELPERS ===
     replServer.context.patchModules = patchModules;
