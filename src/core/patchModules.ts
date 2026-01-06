@@ -1,5 +1,7 @@
 import { Logger } from "../utils/logger.js";
 import { config } from "../utils/config.js";
+import { pathToFileURL } from "url";
+import path from "path";
 
 type ModuleEntry = {
     path?: string;
@@ -156,8 +158,13 @@ export class PatchModules {
     }
 
     private async load(modulePath: string) {
-        const url = new URL(modulePath, import.meta.url).href;
-        const mod = await import(`${url}?v=${Date.now()}`);
+        if (!path.isAbsolute(modulePath)) {
+            modulePath = path.resolve(process.cwd(), modulePath);
+        }
+
+        const fileUrl = pathToFileURL(modulePath).href;
+
+        const mod = await import(`${fileUrl}?v=${Date.now()}`);
 
         const impl = mod.default ?? mod;
         if (!impl) {
@@ -168,26 +175,31 @@ export class PatchModules {
     }
 
     private createProxy(getCurrent: () => any) {
-        return new Proxy({}, {
-            get(_, prop) {
-                const target = getCurrent();
-                const value = Reflect.get(target, prop);
-                // Bind methods to maintain correct 'this' context
-                return typeof value === 'function' ? value.bind(target) : value;
+        return new Proxy(
+            {},
+            {
+                get(_, prop) {
+                    const target = getCurrent();
+                    const value = Reflect.get(target, prop);
+                    // Bind methods to maintain correct 'this' context
+                    return typeof value === "function"
+                        ? value.bind(target)
+                        : value;
+                },
+                set(_, prop, value) {
+                    const target = getCurrent();
+                    return Reflect.set(target, prop, value);
+                },
+                apply(_, thisArg, args) {
+                    const fn = getCurrent();
+                    return Reflect.apply(fn, thisArg, args);
+                },
+                construct(_, args) {
+                    const Constructor = getCurrent();
+                    return Reflect.construct(Constructor, args);
+                },
             },
-            set(_, prop, value) {
-                const target = getCurrent();
-                return Reflect.set(target, prop, value);
-            },
-            apply(_, thisArg, args) {
-                const fn = getCurrent();
-                return Reflect.apply(fn, thisArg, args);
-            },
-            construct(_, args) {
-                const Constructor = getCurrent();
-                return Reflect.construct(Constructor, args);
-            }
-        });
+        );
     }
 }
 
